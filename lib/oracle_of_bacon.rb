@@ -12,7 +12,7 @@ class OracleOfBacon
 
   attr_accessor :from, :to
   attr_reader :api_key, :response, :uri
-  
+
   include ActiveModel::Validations
   validates_presence_of :from
   validates_presence_of :to
@@ -43,10 +43,9 @@ class OracleOfBacon
   end
 
   def make_uri_from_arguments
-    # your code here: set the @uri attribute to properly-escaped URI
-    #   constructed from the @from, @to, @api_key arguments
+    @uri = "http://oracleofbacon.org/cgi-bin/xml?p=#{CGI.escape(@api_key)}&a=#{CGI.escape(@from)}&b=#{CGI.escape(@to)}"
   end
-      
+
   class Response
     attr_reader :type, :data
     # create a Response object from a string of XML markup.
@@ -68,13 +67,53 @@ class OracleOfBacon
       elsif !@doc.xpath('/spellcheck').empty?
         parse_spellcheck_response
       else
-        parse_unknown_response      
+        parse_unknown_response     
       end
     end
     def parse_error_response
       @type = :error
       @data = 'Unauthorized access'
     end
+
+    def parse_graph_response
+      @type = :graph
+      a = @doc.css('actor').map do |i|
+        i.xpath('.//text()').text
+      end
+      m = @doc.css('movie').map do |i|
+        i.xpath('.//text()').text
+      end
+      @data = a.zip(m).flatten.compact
+    end
+    def parse_spellcheck_response
+      @type = :spellcheck
+      s = @doc.css('match').map do |i|
+        i.xpath('.//text()').text
+      end
+      @data = s
+    end
+    def parse_unknown_response
+      @type = :unknown
+      @data = 'unknown response type'
+    end
+    def draw_graph
+      @type = :graph
+      c=0
+      @data.each do |i|
+        if (c%2).eql?(0)
+          if !c.eql?(@data.length - 1)
+            print "#{i} \\_"
+          else
+            puts "#{i}"
+          end
+        else
+          puts " #{i}"
+          if c < @data.length
+          puts "\t\t/"
+          end
+        end
+        c+=1
+      end
+    end
   end
 end
-
