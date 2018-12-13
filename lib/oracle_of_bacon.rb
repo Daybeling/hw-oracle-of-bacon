@@ -67,5 +67,46 @@ class OracleOfBacon
       @type = :error
       @data = 'Unauthorized access'
     end
+
+    def parse_graph_response
+      @type = :graph
+      a = @doc.css('actor').map do |i|
+        i.xpath('.//text()').text
+      end
+      m = @doc.css('movie').map do |i|
+        i.xpath('.//text()').text
+      end
+      @data = a.zip(m).flatten.compact
+    end
+    def parse_spellcheck_response
+      @type = :spellcheck
+      s = @doc.css('match').map do |i|
+        i.xpath('.//text()').text
+      end
+      @data = s
+    end
+    def parse_unknown_response
+      @type = :unknown
+      @data = 'unknown response type'
+    end
+    def draw_graph
+      @type = :graph
+      c=0
+      @data.each do |i|
+        if (c%2).eql?(0)
+          if !c.eql?(@data.length - 1)
+            print "#{i} \\_"
+          else
+            puts "#{i}"
+          end
+        else
+          puts " #{i}"
+          if c < @data.length
+          puts "\t\t/"
+          end
+        end
+        c+=1
+      end
+    end
   end
 end
